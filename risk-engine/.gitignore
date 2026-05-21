@@ -1,0 +1,27 @@
+# Build output
+bin/
+obj/
+out/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# Generated risk reports
+risk-report.json
+*.report.json
+output/
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db

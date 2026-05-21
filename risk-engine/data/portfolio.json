@@ -1,0 +1,78 @@
+{
+  "_comment": "Sample portfolio of synthetic derivatives on the line-movement underlying delta_p. Strikes are in implied-probability units. Quantity > 0 is long (premium paid); < 0 is short (premium received). Entry prices are approximate fair values from the Python pricing study. This book mirrors the study's optimal derivative-augmented strategy: short volatility (straddle/strangle) funding long directional calls.",
+  "name": "Synthetic Line-Movement Book",
+  "baseCurrency": "USD",
+  "asOf": "2026-05-21",
+  "positions": [
+    {
+      "instrument": {
+        "id": "CALL-002",
+        "type": "Call",
+        "strike": 0.02,
+        "description": "Call on delta_p struck at +0.02 - long upside in line drift."
+      },
+      "quantity": 100,
+      "entryPrice": 0.0102,
+      "tag": "directional-long"
+    },
+    {
+      "instrument": {
+        "id": "CALL-003",
+        "type": "Call",
+        "strike": 0.03,
+        "description": "Call on delta_p struck at +0.03 - cheaper, deeper OTM upside."
+      },
+      "quantity": 60,
+      "entryPrice": 0.0079,
+      "tag": "directional-long"
+    },
+    {
+      "instrument": {
+        "id": "STRD-ATM",
+        "type": "Straddle",
+        "strike": 0.0,
+        "description": "At-the-money straddle - short to harvest the volatility risk premium."
+      },
+      "quantity": -50,
+      "entryPrice": 0.0365,
+      "tag": "vol-short"
+    },
+    {
+      "instrument": {
+        "id": "STRG-04",
+        "type": "Strangle",
+        "strike": -0.04,
+        "secondStrike": 0.04,
+        "description": "Strangle: short OTM put at -0.04 and OTM call at +0.04."
+      },
+      "quantity": -40,
+      "entryPrice": 0.0150,
+      "tag": "vol-short"
+    },
+    {
+      "instrument": {
+        "id": "BCS-0206",
+        "type": "BullCallSpread",
+        "strike": 0.02,
+        "secondStrike": 0.06,
+        "description": "Bull call spread: long call at +0.02, short call at +0.06."
+      },
+      "quantity": 30,
+      "entryPrice": 0.0066,
+      "tag": "directional-long"
+    },
+    {
+      "instrument": {
+        "id": "FLY-051",
+        "type": "Butterfly",
+        "strike": 0.0,
+        "secondStrike": 0.05,
+        "thirdStrike": 0.10,
+        "description": "Butterfly centred at +0.05 - long a pinning view on moderate drift."
+      },
+      "quantity": 25,
+      "entryPrice": 0.0095,
+      "tag": "pinning"
+    }
+  ]
+}

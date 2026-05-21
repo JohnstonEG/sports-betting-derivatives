@@ -1,0 +1,111 @@
+@page "/"
+@rendermode InteractiveServer
+@inject RiskDataService Data
+
+<PageTitle>Overview &middot; Risk Engine</PageTitle>
+
+<h1>Portfolio Risk Overview</h1>
+<p class="lead">
+    Monte Carlo risk on a book of synthetic derivatives written on bookmaker
+    line movements. Distribution parameters are calibrated in Python; all
+    simulation, pricing and risk aggregation run in this C# / .NET engine.
+</p>
+
+@if (Data.LoadError is not null)
+{
+    <div class="card error">
+        <strong>Could not load engine data.</strong>
+        <p class="muted">@Data.LoadError</p>
+    </div>
+}
+else if (_report is null)
+{
+    <p class="muted">Computing risk report&hellip;</p>
+}
+else
+{
+    <div class="toolbar">
+        <label class="ctl">
+            <span>Pricing model</span>
+            <select @bind="_model" @bind:after="Recompute">
+                <option value="@PricingModel.StudentT">Student-t Bachelier (fat tails)</option>
+                <option value="@PricingModel.Normal">Normal (Bachelier)</option>
+            </select>
+        </label>
+        <label class="ctl">
+            <span>Monte Carlo paths</span>
+            <select @bind="_paths" @bind:after="Recompute">
+                <option value="10000">10,000</option>
+                <option value="50000">50,000</option>
+                <option value="200000">200,000</option>
+            </select>
+        </label>
+        <div class="grow"></div>
+        <div class="meta">
+            <div><strong>@_report.PortfolioName</strong> &middot; @_report.PositionCount positions</div>
+            <div class="muted">
+                @_report.DistributionModel model &middot; @Fmt.Int(_report.Paths) paths &middot;
+                net premium @Fmt.Signed(_report.NetPremium)
+            </div>
+        </div>
+    </div>
+
+    var h = _report.Headline;
+    <div class="stat-grid">
+        <StatCard Label="Mean PnL" Value="@Fmt.Signed(h.MeanPnl)"
+                  Tone="@(h.MeanPnl >= 0 ? "pos" : "neg")" Hint="expected per-path outcome" />
+        <StatCard Label="Std deviation" Value="@Fmt.Num(h.StdDevPnl)" Hint="dispersion of PnL" />
+        <StatCard Label="95% VaR" Value="@Fmt.Num(h.Var95)" Hint="loss at 95% confidence" />
+        <StatCard Label="99% VaR" Value="@Fmt.Num(h.Var99)" Hint="loss at 99% confidence" />
+        <StatCard Label="95% CVaR" Value="@Fmt.Num(h.CVar95)" Hint="mean loss in the worst 5%" />
+        <StatCard Label="99% CVaR" Value="@Fmt.Num(h.CVar99)" Hint="mean loss in the worst 1%" />
+        <StatCard Label="Probability of loss" Value="@Fmt.Pct(h.ProbabilityOfLoss)"
+                  Hint="paths ending below zero" />
+        <StatCard Label="Sharpe-like ratio" Value="@Fmt.Signed(h.SharpeLike, 3)"
+                  Tone="@(h.SharpeLike >= 0 ? "pos" : "neg")" Hint="mean / std of PnL" />
+    </div>
+
+    <div class="card">
+        <h2>PnL distribution &mdash; base regime</h2>
+        <p class="muted">
+            Skewness @Fmt.Signed(h.Skewness, 2), excess kurtosis @Fmt.Signed(h.ExcessKurtosis, 2)
+            across @Fmt.Int(h.Paths) simulated paths. The chart shows the central 98% of outcomes
+            so the shape stays readable; the deep tails are captured in the VaR and CVaR cards
+            above. Green bars are profitable paths, red are losses.
+        </p>
+        @((MarkupString)SvgCharts.Histogram(_report.PnlHistogram))
+    </div>
+
+    <div class="card note">
+        <h2>How to read this</h2>
+        <p>
+            VaR is the loss not exceeded with the stated confidence; CVaR (expected
+            shortfall) is the average loss once you are already in that tail, so it
+            always exceeds VaR. Switching the pricing model from Normal to Student-t
+            thickens the tails &mdash; watch the 99% VaR and CVaR respond while the
+            mean barely moves. That gap is the pricing impact of non-normality the
+            Python study documents (excess kurtosis 5.46 in the line-movement data).
+        </p>
+    </div>
+}
+
+@code {
+    private PricingModel _model = PricingModel.StudentT;
+    private int _paths = 50_000;
+    private RiskReport? _report;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Data.IsReady) return;
+        _model = Data.DefaultModel;
+        await Recompute();
+    }
+
+    private async Task Recompute()
+    {
+        if (!Data.IsReady) return;
+        var model = _model;
+        var paths = _paths;
+        _report = await Task.Run(() => Data.GetReport(model, paths));
+    }
+}

@@ -1,0 +1,88 @@
+@page "/positions"
+@inject RiskDataService Data
+
+<PageTitle>Positions &middot; Risk Engine</PageTitle>
+
+<h1>Positions &amp; Payoffs</h1>
+<p class="lead">
+    Per-position diagnostics under the base regime: the Monte Carlo model value
+    of each contract, its mean PnL contribution and its standalone tail risk.
+    Each payoff diagram plots the contract payoff and the net PnL (after premium)
+    against the realised line move &Delta;p.
+</p>
+
+@if (Data.LoadError is not null)
+{
+    <div class="card error">
+        <strong>Could not load engine data.</strong>
+        <p class="muted">@Data.LoadError</p>
+    </div>
+}
+else if (_report is null)
+{
+    <p class="muted">Computing positions&hellip;</p>
+}
+else
+{
+    <div class="card">
+        <h2>Position book</h2>
+        <table class="grid">
+            <thead>
+                <tr>
+                    <th>Instrument</th><th>Type</th><th class="r">Quantity</th>
+                    <th class="r">Entry price</th><th class="r">Model value</th>
+                    <th class="r">Mean PnL</th><th class="r">PnL std dev</th>
+                    <th class="r">95% VaR</th><th class="r">PnL share</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in _report.Positions)
+                {
+                    <tr>
+                        <td>@p.InstrumentId</td>
+                        <td>@p.InstrumentType</td>
+                        <td class="r">@Fmt.Num(p.Quantity, 0)</td>
+                        <td class="r">@Fmt.Num(p.EntryPrice)</td>
+                        <td class="r">@Fmt.Num(p.ModelValue)</td>
+                        <td class="r @Sign(p.MeanPnl)">@Fmt.Signed(p.MeanPnl)</td>
+                        <td class="r">@Fmt.Num(p.PnlStdDev)</td>
+                        <td class="r">@Fmt.Num(p.Var95)</td>
+                        <td class="r">@Fmt.Pct(p.PnlShare)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="muted">
+            Model value is the mean Monte Carlo payoff per contract under the base
+            regime. Where it sits above the entry price the position carries positive
+            expected value before correlation with the rest of the book.
+        </p>
+    </div>
+
+    <h2 class="section">Payoff diagrams</h2>
+    <div class="payoff-grid">
+        @foreach (var pos in Data.Portfolio!.Positions)
+        {
+            <div class="card payoff">
+                <div class="payoff-head">
+                    <span class="payoff-id">@pos.Instrument.Id</span>
+                    <span class="payoff-tag">@pos.Instrument.Type &middot; qty @Fmt.Num(pos.Quantity, 0)</span>
+                </div>
+                <p class="muted small">@pos.Instrument.Description</p>
+                @((MarkupString)SvgCharts.PayoffCurve(pos.Instrument, pos.EntryPrice))
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private RiskReport? _report;
+
+    protected override void OnInitialized()
+    {
+        if (Data.IsReady)
+            _report = Data.GetReport(Data.DefaultModel, 50_000);
+    }
+
+    private static string Sign(double v) => v >= 0 ? "pos" : "neg";
+}

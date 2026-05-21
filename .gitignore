@@ -1,0 +1,36 @@
+# Data (too large / not redistributable)
+# Leading slash anchors this to the repo root, so risk-engine/data/
+# (the small sample files the C# engine needs) stays tracked.
+/data/
+*.rds
+*.parquet
+
+# But allow output CSVs (small, useful to include)
+# and output figures (render in README)
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.eggs/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Output results JSON (regenerable)
+output/results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/

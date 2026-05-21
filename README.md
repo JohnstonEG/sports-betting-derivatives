@@ -169,8 +169,13 @@ sports-derivatives/
 │   ├── figures/                 # 15 PNG figures
 │   ├── tables/                  # 12 CSV result tables
 │   └── results/                 # JSON summary
-└── docs/
-    └── methodology.md           # Full mathematical methodology
+├── docs/
+│   └── methodology.md           # Full mathematical methodology
+└── risk-engine/                 # C# / .NET 10 risk engine — see risk-engine/README.md
+    ├── src/RiskEngine.Core/        # Monte Carlo pricing & risk library
+    ├── src/RiskEngine.Cli/         # console risk report
+    ├── src/RiskEngine.Dashboard/   # Blazor risk dashboard
+    └── tests/                      # xUnit test suite
 ```
 
 ## Setup & Usage
@@ -190,6 +195,20 @@ Update data paths in `config.py` if your files are in a different location.
 
 **12 tables**: process summary statistics, process by sport/bookmaker/regime, three-model pricing comparison, implied vol smile, catalog prices, backtest summary, optimal portfolio weights, regime-specific derivative pricing, autocorrelation structure, predictive regressions.
 
+## C# Risk Engine
+
+The [`risk-engine/`](risk-engine/) folder contains a C# / .NET 10 companion to this research: a quantitative risk and pricing engine that consumes the Python-generated calibration of the line-movement process and runs a production-style risk pipeline on a portfolio of synthetic instruments.
+
+It mirrors how quant desks are organised — Python for research and calibration, a separate compiled engine for production risk. The Python pipeline exports the calibrated Δp distribution per regime to `risk-engine/data/calibration.json` (via `risk-engine/tools/export_calibration.py`); the C# engine consumes that file and runs:
+
+- Monte Carlo scenario generation with Normal and fat-tailed Student-t samplers
+- payoff distributions for a loaded portfolio (JSON/CSV ingestion)
+- VaR / CVaR monitoring, with a closed-form Bachelier pricing benchmark
+- a stress-test battery and a regime-switching mixture model
+- volatility scenario analysis
+
+It ships as a .NET solution with an engine library, a console runner, an interactive Blazor dashboard, and an xUnit test suite. See [`risk-engine/README.md`](risk-engine/README.md) for build and run instructions.
+
 ## Connection to Related Work
 
 This project extends my research on sports betting market microstructure following the PASPA repeal (presented at MEA 2025). The PASPA spillover paper examines how US legalization affected international betting margins; this project examines whether the line-movement dynamics that drive those margins can be exploited through derivative-like instruments.
@@ -206,6 +225,8 @@ The Bachelier model connection links sports betting microstructure to the earlie
 ## Requirements
 
 Python ≥ 3.10, pandas, numpy, scipy, matplotlib, seaborn, pyarrow, scikit-learn.
+
+The C# risk engine additionally requires the .NET 10 SDK — see [`risk-engine/README.md`](risk-engine/README.md).
 
 ## License
 

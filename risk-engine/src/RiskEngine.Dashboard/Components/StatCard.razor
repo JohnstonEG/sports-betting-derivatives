@@ -1,0 +1,17 @@
+<div class="stat-card @Tone">
+    <div class="stat-label">@Label</div>
+    <div class="stat-value">@Value</div>
+    @if (!string.IsNullOrEmpty(Hint))
+    {
+        <div class="stat-hint">@Hint</div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public string Hint { get; set; } = "";
+
+    /// <summary>Visual tone: "" (neutral), "pos" (green) or "neg" (red).</summary>
+    [Parameter] public string Tone { get; set; } = "";
+}

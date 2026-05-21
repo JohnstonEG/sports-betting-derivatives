@@ -1,0 +1,120 @@
+@page "/scenarios"
+@inject RiskDataService Data
+
+<PageTitle>Scenarios &middot; Risk Engine</PageTitle>
+
+<h1>Regime &amp; Stress Analysis</h1>
+<p class="lead">
+    The same portfolio re-priced under each calibrated market regime, a
+    regime-switching mixture, a battery of stress shocks, and a continuous
+    volatility sweep. Every scenario uses common random numbers, so differences
+    isolate the parameter change rather than simulation noise.
+</p>
+
+@if (Data.LoadError is not null)
+{
+    <div class="card error">
+        <strong>Could not load engine data.</strong>
+        <p class="muted">@Data.LoadError</p>
+    </div>
+}
+else if (_report is null)
+{
+    <p class="muted">Computing scenarios&hellip;</p>
+}
+else
+{
+    <div class="card">
+        <h2>Risk by market regime</h2>
+        <table class="grid">
+            <thead>
+                <tr>
+                    <th>Regime</th><th class="r">Mean PnL</th><th class="r">Std dev</th>
+                    <th class="r">95% VaR</th><th class="r">95% CVaR</th>
+                    <th class="r">99% VaR</th><th class="r">P(loss)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in _report.Regimes)
+                {
+                    <tr>
+                        <td>@s.Label</td>
+                        <td class="r @Sign(s.MeanPnl)">@Fmt.Signed(s.MeanPnl)</td>
+                        <td class="r">@Fmt.Num(s.StdDevPnl)</td>
+                        <td class="r">@Fmt.Num(s.Var95)</td>
+                        <td class="r">@Fmt.Num(s.CVar95)</td>
+                        <td class="r">@Fmt.Num(s.Var99)</td>
+                        <td class="r">@Fmt.Pct(s.ProbabilityOfLoss)</td>
+                    </tr>
+                }
+                <tr class="highlight">
+                    <td>@_report.RegimeSwitching.Label</td>
+                    <td class="r @Sign(_report.RegimeSwitching.MeanPnl)">@Fmt.Signed(_report.RegimeSwitching.MeanPnl)</td>
+                    <td class="r">@Fmt.Num(_report.RegimeSwitching.StdDevPnl)</td>
+                    <td class="r">@Fmt.Num(_report.RegimeSwitching.Var95)</td>
+                    <td class="r">@Fmt.Num(_report.RegimeSwitching.CVar95)</td>
+                    <td class="r">@Fmt.Num(_report.RegimeSwitching.Var99)</td>
+                    <td class="r">@Fmt.Pct(_report.RegimeSwitching.ProbabilityOfLoss)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="muted">
+            The regime-switching row is the weighted mixture of all regimes &mdash; each
+            simulated path first draws a regime by its historical frequency, then draws
+            its line move from that regime's distribution.
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>Stress test battery &mdash; 95% VaR</h2>
+        @((MarkupString)SvgCharts.HBars(StressVar()))
+        <table class="grid">
+            <thead>
+                <tr>
+                    <th>Scenario</th><th class="r">Mean PnL</th><th class="r">95% VaR</th>
+                    <th class="r">95% CVaR</th><th class="r">99% CVaR</th>
+                    <th class="r">Excess kurtosis</th><th class="r">P(loss)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in _report.StressScenarios)
+                {
+                    <tr>
+                        <td>@s.Label</td>
+                        <td class="r @Sign(s.MeanPnl)">@Fmt.Signed(s.MeanPnl)</td>
+                        <td class="r">@Fmt.Num(s.Var95)</td>
+                        <td class="r">@Fmt.Num(s.CVar95)</td>
+                        <td class="r">@Fmt.Num(s.CVar99)</td>
+                        <td class="r">@Fmt.Signed(s.ExcessKurtosis, 2)</td>
+                        <td class="r">@Fmt.Pct(s.ProbabilityOfLoss)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Volatility scenario sweep</h2>
+        <p class="muted">
+            95% VaR and CVaR as the calibrated base volatility is scaled from
+            0.5&times; to 2.0&times;. Tail risk grows faster than linearly &mdash;
+            the convexity a short-volatility book is exposed to.
+        </p>
+        @((MarkupString)SvgCharts.VolCurve(_report.VolatilityCurve))
+    </div>
+}
+
+@code {
+    private RiskReport? _report;
+
+    protected override void OnInitialized()
+    {
+        if (Data.IsReady)
+            _report = Data.GetReport(Data.DefaultModel, 50_000);
+    }
+
+    private static string Sign(double v) => v >= 0 ? "pos" : "neg";
+
+    private List<(string Label, double Value)> StressVar()
+        => _report!.StressScenarios.Select(s => (s.Label, s.Var95)).ToList();
+}

@@ -1,0 +1,10 @@
+# Sample portfolio - CSV ingestion demo for RiskEngine.Core.PortfolioLoader.LoadCsv
+# Strikes are in implied-probability units. Quantity > 0 long, < 0 short.
+# Columns are order-independent; blank numeric cells default to 0.
+Id,Type,Strike,SecondStrike,ThirdStrike,Quantity,EntryPrice,Tag,Description
+CALL-002,Call,0.02,,,100,0.0102,directional-long,Call on delta_p struck at +0.02
+CALL-003,Call,0.03,,,60,0.0079,directional-long,Call on delta_p struck at +0.03
+STRD-ATM,Straddle,0.0,,,-50,0.0365,vol-short,At-the-money straddle (short volatility)
+STRG-04,Strangle,-0.04,0.04,,-40,0.0150,vol-short,Short OTM put at -0.04 and OTM call at +0.04
+BCS-0206,BullCallSpread,0.02,0.06,,30,0.0066,directional-long,Bull call spread +0.02 / +0.06
+FLY-051,Butterfly,0.0,0.05,0.10,25,0.0095,pinning,Butterfly centred at +0.05
