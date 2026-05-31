@@ -29,17 +29,18 @@ study showed this process is fat-tailed (excess kurtosis 5.46) and regime-depend
 | Stress testing | `StressTester` (6-scenario battery) |
 | Regime switching | `RegimeSwitchingSampler`, `ScenarioAnalyzer` |
 | Volatility scenario analysis | `ScenarioAnalyzer.VolatilityCurve` |
-| Payoff visualisation / dashboard | `RiskEngine.Dashboard` (Blazor) |
+| Payoff visualisation / dashboards | `RiskEngine.Dashboard` (Blazor, C#) and [`dashboard-shiny/`](dashboard-shiny/) (Shiny, Python) |
 | Analytic benchmark pricing | `Bachelier` (closed-form + implied vol) |
 
 ## Architecture
 
 ```
-  Python research pipeline                  C# risk engine
-  ────────────────────────                  ──────────────────────────────
-  data → calibrate Δp process   ──JSON──►   RiskEngine.Core   (engine library)
-  tools/export_calibration.py               ├─ RiskEngine.Cli       (console)
-        writes calibration.json             └─ RiskEngine.Dashboard (Blazor UI)
+  Python research pipeline                  Engine + UIs
+  ────────────────────────                  ──────────────────────────────────
+  data → calibrate Δp process   ──JSON──►   RiskEngine.Core   (C# engine library)
+  tools/export_calibration.py               ├─ RiskEngine.Cli         (console)
+        writes calibration.json             ├─ RiskEngine.Dashboard   (Blazor UI, C#)
+                                            └─ dashboard-shiny/       (Shiny UI, Python)
 ```
 
 The bridge is a single JSON file (`data/calibration.json`) holding the calibrated
@@ -66,7 +67,12 @@ risk-engine/
 │   │   ├── Io/                 # JSON/CSV loaders
 │   │   └── RiskEngineService.cs # orchestration → RiskReport
 │   ├── RiskEngine.Cli/         # console runner — formatted report + JSON output
-│   └── RiskEngine.Dashboard/   # Blazor dashboard with inline-SVG charts
+│   └── RiskEngine.Dashboard/   # Blazor dashboard with inline-SVG charts (C#)
+├── dashboard-shiny/            # Shiny dashboard (Python, Plotly) over the same engine
+│   ├── app.py                  # Shiny UI + server
+│   ├── engine.py               # subprocess wrapper for RiskEngine.Cli
+│   ├── charts.py               # Plotly chart builders
+│   └── requirements.txt
 └── tests/
     └── RiskEngine.Tests/       # xUnit suite (payoffs, metrics, MC, I/O)
 ```
@@ -93,6 +99,21 @@ dotnet test
 
 The CLI and dashboard ship with a sample `portfolio.json` and `calibration.json`,
 so they run with no extra setup.
+
+### Shiny (Python) dashboard
+
+A Python alternative to the Blazor dashboard, sitting on top of the same C# engine
+via a subprocess call. Same engine, same JSON, different UI.
+
+```bash
+cd dashboard-shiny
+pip install -r requirements.txt
+shiny run --reload app.py
+```
+
+The Shiny app shells out to the built `RiskEngine.Cli` (or `dotnet run` as a
+fallback), reads `risk-report.json`, and renders the same three tabs as Blazor
+using Plotly. See [`dashboard-shiny/README.md`](dashboard-shiny/README.md) for details.
 
 ### CLI options
 
@@ -162,11 +183,11 @@ The xUnit suite (`dotnet test`) covers:
 
 ## Resume framing
 
-> Developed a C# quantitative risk and pricing engine integrating Python-generated
-> derivative valuations, portfolio exposures and scenario simulations for synthetic
-> sports-betting instruments — Monte Carlo scenario generation, VaR/CVaR monitoring,
-> stress testing and payoff visualisation across a .NET solution (engine library,
-> console runner, Blazor dashboard, xUnit suite).
+> Developed a C# / .NET quantitative risk and pricing engine on Python-generated
+> derivative calibrations for synthetic sports-betting instruments — Monte Carlo
+> scenario generation, VaR/CVaR monitoring, stress testing, regime switching —
+> exposed through two dashboards on a shared JSON contract: an interactive Blazor
+> (C#) UI and a Shiny (Python) UI. Covered by an xUnit test suite on the engine.
 
 ## License
 

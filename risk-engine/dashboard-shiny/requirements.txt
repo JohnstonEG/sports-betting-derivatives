@@ -1,0 +1,7 @@
+# Python deps for the Shiny dashboard on top of the C# / .NET risk engine.
+# Install with:  pip install -r requirements.txt
+shiny>=0.10
+shinywidgets>=0.3
+plotly>=5.18
+pandas>=2.0
+numpy>=1.24

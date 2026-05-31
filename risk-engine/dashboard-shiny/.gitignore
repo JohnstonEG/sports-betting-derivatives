@@ -1,0 +1,12 @@
+# Cached engine output
+.cache/
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

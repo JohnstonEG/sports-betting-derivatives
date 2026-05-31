@@ -174,7 +174,8 @@ sports-derivatives/
 └── risk-engine/                 # C# / .NET 10 risk engine — see risk-engine/README.md
     ├── src/RiskEngine.Core/        # Monte Carlo pricing & risk library
     ├── src/RiskEngine.Cli/         # console risk report
-    ├── src/RiskEngine.Dashboard/   # Blazor risk dashboard
+    ├── src/RiskEngine.Dashboard/   # Blazor risk dashboard (C#)
+    ├── dashboard-shiny/            # Shiny risk dashboard (Python)
     └── tests/                      # xUnit test suite
 ```
 
@@ -207,7 +208,7 @@ It mirrors how quant desks are organised — Python for research and calibration
 - a stress-test battery and a regime-switching mixture model
 - volatility scenario analysis
 
-It ships as a .NET solution with an engine library, a console runner, an interactive Blazor dashboard, and an xUnit test suite. See [`risk-engine/README.md`](risk-engine/README.md) for build and run instructions.
+It ships as a .NET solution (engine library, console runner, interactive Blazor dashboard, xUnit test suite) plus a [Shiny (Python) dashboard](risk-engine/dashboard-shiny/) on top of the same engine — two UIs sharing one JSON contract, demonstrating polyglot Python/.NET integration. See [`risk-engine/README.md`](risk-engine/README.md) for build and run instructions.
 
 ## Connection to Related Work
 
